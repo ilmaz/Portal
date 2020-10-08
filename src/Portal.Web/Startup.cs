@@ -13,6 +13,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Portal.Persistance;
 using Portal.Domain;
+using Portal.Web.Common;
+using Polly;
+using Portal.Web.Workers;
+using Portal.Web.Hubs;
 
 namespace Portal.Web
 {
@@ -29,19 +33,26 @@ namespace Portal.Web
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddDbContext<ApplicationDbContext>(options =>
-                options.UseSqlServer(
-                    Configuration.GetConnectionString("DefaultConnection")));
+                 options.UseSqlServer(
+                     Configuration.GetConnectionString("DefaultConnection")));
 
             services.AddDefaultIdentity<ApplicationUser>(options => options.SignIn.RequireConfirmedAccount = true)
                 .AddEntityFrameworkStores<ApplicationDbContext>();
-
+            services.AddControllers();
             services.AddRazorPages()
                 .AddRazorRuntimeCompilation();
-              //.AddRazorPagesOptions(options =>
-              //{
-              //    options.Conventions.AuthorizeFolder("/user");
-              //    options.Conventions.AuthorizeAreaFolder("admin", "/", "RequireAdminRole");
-              //});
+
+            services.AddHttpClient<PostClient>()
+                .AddTransientHttpErrorPolicy(p =>
+                p.CircuitBreakerAsync(2, TimeSpan.FromSeconds(10)));
+
+            services.AddSignalR();
+
+            services.AddHostedService<NotificationWorker>();
+            services.AddHostedService<HealthMonitoringWorker>();
+
+            services.AddScoped<INotificationScopedService, NotificationScopedService>();
+            services.AddScoped<IHealthMonitoringService, HealthMonitoringService>();
         }
 
         
@@ -69,7 +80,10 @@ namespace Portal.Web
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapControllers();
                 endpoints.MapRazorPages();
+                endpoints.MapHub<NotificationHub>("/notifyhub");
+                endpoints.MapHub<MonitoringHub>("/monitorhub");
             });
         }
     }
