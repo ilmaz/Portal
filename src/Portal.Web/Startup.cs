@@ -46,6 +46,7 @@ namespace Portal.Web
                 .AddTransientHttpErrorPolicy(p =>
                 p.CircuitBreakerAsync(2, TimeSpan.FromSeconds(10)));
 
+
             services.AddSignalR();
 
             services.AddHostedService<NotificationWorker>();
