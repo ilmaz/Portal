@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using Polly;
 using Portal.ImageService.Protos;
@@ -23,10 +24,12 @@ namespace Portal.Web.Areas.User.Pages.Posts
     public class CreateModel : PageModel
     {
         private readonly PostClient _postClient;
+        private readonly IConfiguration _configuration;
 
-        public CreateModel(PostClient postClient)
+        public CreateModel(PostClient postClient, IConfiguration configuration)
         {
             _postClient = postClient;
+            _configuration = configuration;
         }
 
         public async Task<IActionResult> OnPost()
@@ -39,7 +42,9 @@ namespace Portal.Web.Areas.User.Pages.Posts
 
             await polly.ExecuteAsync(async () =>
             {
-                using var channel = GrpcChannel.ForAddress("https://localhost:5303");
+                var imageservice = _configuration.GetServiceUri("portal-imageservice");
+
+                using var channel = GrpcChannel.ForAddress(imageservice);
                 var uploadFileClient = new UploadFileService.UploadFileServiceClient(channel);
                 await SendFile(uploadFileClient, Post.File, Post.Id.ToString());
             });

@@ -1,0 +1,20 @@
+# tye application configuration file
+# read all about it at https://github.com/dotnet/tye
+#
+# when you've given us a try, we'd love to know what you think:
+#    https://aka.ms/AA7q20u
+#
+name: portal
+services:
+- name: portal-web
+  project: src/Portal.Web/Portal.Web.csproj
+- name: portal-postservice
+  project: Services/Portal.PostService/Portal.PostService.csproj
+- name: portal-imagecropservice
+  project: Services/Portal.ImageCropService/Portal.ImageCropService.csproj
+- name: portal-imageservice
+  project: Services/Portal.ImageService/Portal.ImageService.csproj
+  bindings:
+  - protocol: https
+- name: portal-imagedeliveryservice
+  project: Services/Portal.ImageDeliveryService/Portal.ImageDeliveryService.csproj
